@@ -30,3 +30,4 @@ D:\OpenSource\task-manager\TaskManagerApi\obj\Debug\net9.0\refint\TaskManagerApi
 D:\OpenSource\task-manager\TaskManagerApi\obj\Debug\net9.0\TaskManagerApi.pdb
 D:\OpenSource\task-manager\TaskManagerApi\obj\Debug\net9.0\TaskManagerApi.genruntimeconfig.cache
 D:\OpenSource\task-manager\TaskManagerApi\obj\Debug\net9.0\ref\TaskManagerApi.dll
+D:\OpenSource\task-manager\TaskManagerApi\obj\Debug\net9.0\TaskManagerApi.sourcelink.json
