@@ -9,29 +9,38 @@ interface Task {
 interface TaskListProps {
   tasks: Task[];
   onDelete: (id: string) => void;
-  onToggle: (id: string, current: boolean, desc: string) => void;
+  onToggle: (id: string) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onDelete, onToggle }) => {
   if (tasks.length === 0) {
-    return <p className="empty-text">No tasks yet. Add some!</p>;
+    return <p className="text-center text-muted">No tasks yet 😴</p>;
   }
 
   return (
-    <ul className="task-list">
+    <ul className="list-group">
       {tasks.map((task) => (
         <li
           key={task.id}
-          className={`task-item ${task.isCompleted ? "completed" : ""}`}
+          className={`list-group-item d-flex justify-content-between align-items-center ${
+            task.isCompleted ? "list-group-item-success" : ""
+          }`}
         >
           <span
-            onClick={() =>
-              onToggle(task.id, task.isCompleted, task.description)
-            }
+            style={{
+              textDecoration: task.isCompleted ? "line-through" : "none",
+              cursor: "pointer",
+            }}
+            onClick={() => onToggle(task.id)}
           >
             {task.description}
           </span>
-          <button onClick={() => onDelete(task.id)}>❌</button>
+          <button
+            className="btn btn-sm btn-outline-danger"
+            onClick={() => onDelete(task.id)}
+          >
+            ✕
+          </button>
         </li>
       ))}
     </ul>
