@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import TaskList from "./components/TaskList";
+import "./App.css";
 
 interface Task {
   id: string;
@@ -7,65 +7,37 @@ interface Task {
   isCompleted: boolean;
 }
 
-const API_URL = "http://localhost:5013/api/tasks";
-
-export default function App() {
+const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // 🧠 Load from API + localStorage
+  const apiBase = "http://localhost:5013/api/tasks";
+
   useEffect(() => {
-    const saved = localStorage.getItem("tasks");
-    if (saved) {
-      setTasks(JSON.parse(saved));
-    } else {
-      fetchTasks();
-    }
+    fetch(apiBase)
+      .then((res) => res.json())
+      .then((data) => setTasks(data))
+      .catch((err) => console.error("Error fetching tasks:", err));
   }, []);
-
-  // 💾 Save to localStorage on every change
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
-
-  const fetchTasks = async () => {
-    try {
-      const res = await fetch(API_URL);
-      const data: Task[] = await res.json();
-      setTasks(data);
-    } catch (err) {
-      console.log("⚠️ Using local data only (server unavailable)");
-    }
-  };
 
   const addTask = async () => {
     if (!newTask.trim()) return;
+    const newItem: Omit<Task, "id"> = {
+      description: newTask.trim(),
+      isCompleted: false,
+    };
 
-    const newItem = { id: crypto.randomUUID(), description: newTask, isCompleted: false };
+    const res = await fetch(apiBase, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newItem),
+    });
 
-    setTasks((prev) => [...prev, newItem]);
+    const data = await res.json();
+    setTasks([...tasks, data]);
     setNewTask("");
-
-    try {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newItem),
-      });
-    } catch (err) {
-      console.log("Offline mode: Task saved locally");
-    }
-  };
-
-  const deleteTask = async (id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-
-    try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    } catch {
-      console.log("Offline delete");
-    }
   };
 
   const toggleComplete = async (id: string) => {
@@ -74,18 +46,24 @@ export default function App() {
     );
     setTasks(updatedTasks);
 
-    const updatedTask = updatedTasks.find((t) => t.id === id);
-    if (updatedTask) {
-      try {
-        await fetch(`${API_URL}/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedTask),
-        });
-      } catch {
-        console.log("Offline toggle");
-      }
+    const taskToUpdate = updatedTasks.find((t) => t.id === id);
+    await fetch(`${apiBase}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(taskToUpdate),
+    });
+  };
+
+  const deleteTask = async (id: string) => {
+    await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
+
+  const clearTasks = async () => {
+    for (const t of tasks) {
+      await fetch(`${apiBase}/${t.id}`, { method: "DELETE" });
     }
+    setTasks([]);
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -94,45 +72,73 @@ export default function App() {
     return true;
   });
 
-  return (
-    <div className="container mt-5 p-4 rounded shadow bg-light">
-      <h1 className="text-center mb-4 fw-bold">📝 Task Manager</h1>
+  const searchedTasks = filteredTasks.filter((task) =>
+    task.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-      <div className="input-group mb-4">
+  return (
+    <div className="container">
+      <h1 className="title">Task Manager</h1>
+
+      <div className="input-section">
         <input
           type="text"
-          className="form-control"
-          placeholder="Enter a new task..."
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
+          placeholder="Enter a new task..."
         />
-        <button className="btn btn-primary" onClick={addTask}>
-          Add
+        <button onClick={addTask}>Add Task</button>
+      </div>
+
+      <div className="controls">
+        <input
+          type="text"
+          placeholder="🔍 Search tasks..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className="filters">
+          <button
+            className={filter === "all" ? "active" : ""}
+            onClick={() => setFilter("all")}
+          >
+            All
+          </button>
+          <button
+            className={filter === "active" ? "active" : ""}
+            onClick={() => setFilter("active")}
+          >
+            Active
+          </button>
+          <button
+            className={filter === "completed" ? "active" : ""}
+            onClick={() => setFilter("completed")}
+          >
+            Completed
+          </button>
+        </div>
+        <button className="clear" onClick={clearTasks}>
+          Clear All
         </button>
       </div>
 
-      <div className="d-flex justify-content-center mb-3 gap-2">
-        <button
-          className={`btn btn-sm ${filter === "all" ? "btn-dark" : "btn-outline-dark"}`}
-          onClick={() => setFilter("all")}
-        >
-          All
-        </button>
-        <button
-          className={`btn btn-sm ${filter === "active" ? "btn-dark" : "btn-outline-dark"}`}
-          onClick={() => setFilter("active")}
-        >
-          Active
-        </button>
-        <button
-          className={`btn btn-sm ${filter === "completed" ? "btn-dark" : "btn-outline-dark"}`}
-          onClick={() => setFilter("completed")}
-        >
-          Completed
-        </button>
-      </div>
-
-      <TaskList tasks={filteredTasks} onDelete={deleteTask} onToggle={toggleComplete} />
+      <ul className="task-list">
+        {searchedTasks.map((task) => (
+          <li key={task.id} className={task.isCompleted ? "completed" : ""}>
+            <span onClick={() => toggleComplete(task.id)}>
+              {task.description}
+            </span>
+            <button className="delete" onClick={() => deleteTask(task.id)}>
+              ✖
+            </button>
+          </li>
+        ))}
+        {searchedTasks.length === 0 && (
+          <p className="empty-msg">No tasks to display</p>
+        )}
+      </ul>
     </div>
   );
-}
+};
+
+export default App;
