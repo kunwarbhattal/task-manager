@@ -20,7 +20,7 @@ It allows users to **add**, **view**, **mark complete**, and **delete** tasks â€
 ## ðŸ§° Tech Stack
 
 ### **Frontend**
-- React (JavaScript)
+- React (TypeScript)
 - Axios for API calls
 - CSS for styling (no Tailwind)
 
