@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
+const apiUrl = import.meta.env.API_BASE;
+
 interface Task {
   id: string;
   description: string;
@@ -13,7 +15,7 @@ const App: React.FC = () => {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const apiBase = "http://localhost:5013/api/tasks";
+  const apiBase = apiUrl || "http://localhost:5013/api/tasks";
 
   useEffect(() => {
     fetch(apiBase)
